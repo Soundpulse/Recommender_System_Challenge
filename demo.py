@@ -5,7 +5,7 @@ from lightfm import LightFM
 # fetch data and format it
 data = fetch_movielens(min_rating=4.0)
 
-# printtraining and testing data
+# print training and testing data
 print(repr(data['train']))
 print(repr(data['test']))
 
@@ -42,4 +42,4 @@ def sample_recommendation(model, data, user_ids):
             print("         %s" % x)
 
 
-sample_recommendation(model, data, [3, 25, 450])
+sample_recommendation(model, data, range(1, 450, 1))

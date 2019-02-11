@@ -28,7 +28,7 @@ def sample_recommendation(model, data, user_ids):
 
         # rank them in order
         top_items = data['item_labels'][np.argsort(-scores)]
-
+        print(scores)
         # print out the results
         print("User %s" % user_id)
         print("     Known positives:")
@@ -42,4 +42,5 @@ def sample_recommendation(model, data, user_ids):
             print("         %s" % x)
 
 
-sample_recommendation(model, data, range(1, 450, 1))
+# print recommendations for users 1 - 450
+sample_recommendation(model, data, [2])

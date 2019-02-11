@@ -4,14 +4,10 @@ from lightfm.evaluation import precision_at_k
 from lightfm.evaluation import auc_score
 import data as d
 
-# TODO List
-# Better sort for csr
-
 
 def sample_recommendation(model, data, user_ids):
 
     # Initialize variables
-    print("Initializing...")
     n_users, n_books = data['spr_mtrx'].shape
 
     coo = data['spr_mtrx']
@@ -80,6 +76,63 @@ def sample_recommendation(model, data, user_ids):
         print(".=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+.")
 
 
+def train(models, user_ids):
+    highest_test_precision = 0
+    best_model = None
+
+    for model in models:
+        # train model
+        print("Fitting...")
+        model.fit(dfs_train['spr_mtrx'], epochs=50)
+
+        # zero indexing :)
+        # /***********************************************\
+        # | PLACE USER_ID HERE FOR PRINTING AND TESTING!! |
+        # \***********************************************/
+        sample_recommendation(model, dfs_train, [])
+
+        # testing accuracy
+        train_precision = precision_at_k(model,
+                                         dfs_train['spr_mtrx'], k=10).mean()
+        test_precision = precision_at_k(model,
+                                        dfs_test['spr_mtrx'], k=10).mean()
+
+        train_auc = auc_score(model, dfs_train['spr_mtrx']).mean()
+        test_auc = auc_score(model, dfs_test['spr_mtrx']).mean()
+
+        if model == model_w:
+            print("WARP:")
+        if model == model_l:
+            print("Logistic:")
+        if model == model_b:
+            print("BPR:")
+
+        # printout statements
+        print('Precision - Train: %.2f, Test: %.2f.' % (train_precision,
+                                                        test_precision))
+        print('AUC - Train: %.2f, Test: %.2f.' % (train_auc, test_auc))
+
+        print(test_precision)
+        print(highest_test_precision)
+        print("value")
+        if test_precision > highest_test_precision:
+            highest_test_precision = test_precision
+            best_model = model
+
+    if best_model == model_w:
+        print("Best Model: WARP, test precision: %.2f" %
+              highest_test_precision)
+    if best_model == model_l:
+        print("Best Model: Logistic, test precision: %.2f" %
+              highest_test_precision)
+    if best_model == model_b:
+        print("Best Model: BPR, test precision: %.2f" %
+              highest_test_precision)
+
+    sample_recommendation(best_model, dfs_train, user_ids)
+    return best_model
+
+
 # main program
 # training and testing data
 print("Fetching Data...")
@@ -94,32 +147,4 @@ model_l = LightFM(loss='logistic')
 model_b = LightFM(loss='bpr')
 models = [model_w, model_l, model_b]
 
-for model in models:
-    # train model
-    print("Fitting...")
-    model.fit(dfs_train['spr_mtrx'], epochs=50)
-
-    # zero indexing :)
-    # /***********************************************\
-    # | PLACE USER_ID HERE FOR PRINTING AND TESTING!! |
-    # \***********************************************/
-    sample_recommendation(model, dfs_train, [])
-
-    # testing accuracy
-    train_precision = precision_at_k(model, dfs_train['spr_mtrx'], k=10).mean()
-    test_precision = precision_at_k(model, dfs_test['spr_mtrx'], k=10).mean()
-
-    train_auc = auc_score(model, dfs_train['spr_mtrx']).mean()
-    test_auc = auc_score(model, dfs_test['spr_mtrx']).mean()
-
-    if model == model_w:
-        print("WARP:")
-    if model == model_l:
-        print("Logistic:")
-    if model == model_b:
-        print("BPR:")
-
-    # printout statements
-    print('Precision - Train: %.2f, Test: %.2f.' % (train_precision,
-                                                    test_precision))
-    print('AUC - Train: %.2f, Test: %.2f.' % (train_auc, test_auc))
+train(models, range(1, 10, 1))

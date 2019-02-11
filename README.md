@@ -2,7 +2,7 @@
 
 Challenge #3 of Siraj's Python for Data Science Series.
 
-Used a book rating dataset to create a collaborative recommender system using WARP loss function from LightFM.
+Used a book rating dataset to create a collaborative recommender system using WARP, BPR and logistic loss functions from LightFM.
 data has been seperated into train and test set for testing purposes.
 
 ## Credits

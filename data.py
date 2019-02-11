@@ -1,38 +1,53 @@
 import os
-import pandas as pd
-from scipy.sparse import csr_matrix
-from pandas.api.types import CategoricalDtype
-
+import scipy.sparse as sp
+import csv
 # Fetching and formatting datasets
 
 dir = os.path.dirname(__file__)
 
+# Data to create our coo_matrix
+data, i, j = [], [], []
 
-# TODO List
-# min_rating
-def fetch_ratings(file):
+users, books = [], []
+
+
+# Row: users, Column: books, value: ratings
+def fetch_ratings(file, min_rating):
     path = os.path.join(dir, "csvfiles", file)
-    df = pd.read_csv(path, sep=";", header=None)
+    f = open(path)
+    reader = csv.reader(f)
+    for line in reader:
+        temp = [x for x in line[0].replace('"', '').split(';')]
+        user = int(temp[0])
+        isbn = temp[1]
+        rating = int(temp[2])
 
-    # Not sparse
-    df.columns = ['uid', 'isbn', 'rating']
-    df.pivot(index='uid', columns='isbn', values='rating')
+        # Assign user in users
+        if user not in users:
+            users.append(user)
 
-    # sparse
-    uid_c = CategoricalDtype(sorted(df.uid.unique()), ordered=True)
-    isbn_c = CategoricalDtype(sorted(df.isbn.unique()), ordered=True)
+        # TODO:
+        # IMPLEMENT NAME AND INFORMATION OF BOOK GIVEN ISBN
+        if isbn not in books:
+            books.append(isbn)
 
-    row = df.uid.astype(uid_c).cat.codes
-    col = df.isbn.astype(isbn_c).cat.codes
-    sparse_matrix = csr_matrix((df['rating'], (row, col)),
-                               shape=(uid_c.categories.size,
-                                      isbn_c.categories.size))
-    print(repr(sparse_matrix))
-    # dfs = pd.SparseDataFrame(sparse_matrix,
-    #                         index=uid_c.categories,
-    #                         columns=isbn_c.categories,
-    #                         default_fill_value=0)
-    return sparse_matrix
+        if rating >= min_rating:
+            data.append(rating)
+            i.append(users.index(user))
+            j.append(books.index(isbn))
+            print("%d, %d, %d" % (rating, users.index(user), books.index(isbn)))
+
+    coo = sp.coo_matrix((data, (i, j)))
+    print(repr(coo))
+    # We return the matrix, the artist dictionary and the amount of users
+
+    dictionary = {
+        'matrix': coo,
+        'books': books,
+        'users': users
+    }
+
+    return dictionary
 
 
-fetch_ratings("BX-Ratings-Test.csv")
+fetch_ratings("BX-Ratings-Train.csv", 5)

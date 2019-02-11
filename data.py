@@ -1,6 +1,7 @@
 import os
 import scipy.sparse as sp
 import csv
+import pandas as pd
 # Fetching and formatting datasets
 
 dir = os.path.dirname(__file__)
@@ -11,11 +12,28 @@ data, i, j = [], [], []
 users, books = [], []
 
 
+def fetch_books():
+
+    path = os.path.join(dir, "csvfiles", "BX-Books.csv")
+    df = pd.read_csv(path, delimiter=";",
+                     error_bad_lines=False,
+                     encoding='ISO-8859-1',
+                     usecols=["ISBN",
+                              "Book-Title",
+                              "Book-Author",
+                              "Year-Of-Publication",
+                              "Publisher"],
+                     low_memory=False
+                     )
+    return df
+
+
+def fetch_book_info(df, isbn):
+    return df.loc[df["ISBN"] == isbn]
+
+
 # Row: users, Column: books, value: ratings
 def fetch_ratings(file, min_rating=0):
-
-    # Ratings can only be integers
-    min_rating = int(min_rating)
 
     path = os.path.join(dir, "csvfiles", file)
     f = open(path)
@@ -45,7 +63,7 @@ def fetch_ratings(file, min_rating=0):
 
     dictionary = {
         'spr_mtrx': coo,
-        'books': books,
+        'book_id': books,
         'users': users
     }
 

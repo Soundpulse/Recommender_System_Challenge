@@ -1,5 +1,7 @@
 import numpy as np
 from lightfm import LightFM
+from lightfm.evaluation import precision_at_k
+from lightfm.evaluation import auc_score
 import data as d
 
 # TODO List
@@ -68,7 +70,8 @@ def sample_recommendation(model, data, user_ids):
                                      bid[predict_recommendations[6 - i]])
             s = round(predict_score[6 - i], 2)
             if info.empty:
-                print("        Score: %s, Book: not in database :(  ISBN: %s" %
+                print('        Score: %s, Book: not in database :('
+                      '  ISBN: %s' %
                       (s, bid[predict_recommendations[6 - i]]))
             else:
                 print("        Score: %s, Book: %s ISBN: %s" %
@@ -79,20 +82,46 @@ def sample_recommendation(model, data, user_ids):
 
 # main program
 # training and testing data
-# testing set available but I have no idea how to test this :/
 print("Fetching Data...")
-dfs_train = d.fetch_ratings("BX-Book-Ratings.csv", 0)
-# dfs_train = d.fetch_ratings("BX-Ratings-Train.csv", 5)
-# dfs_test = d.fetch_ratings("BX-Ratings-Test.csv", 0)
+# dfs = d.fetch_ratings("BX-Book-Ratings.csv", 5)
+dfs_train = d.fetch_ratings("BX-Ratings-Train.csv", 5)
+dfs_test = d.fetch_ratings("BX-Ratings-Test.csv", 5)
 
 # create model (weighted approximate rank pairwase)
 print("Training Model...")
-model = LightFM(loss='warp')
-
+model_w = LightFM(loss='warp')
+model_l = LightFM(loss='logistic')
+model_b = LightFM(loss='bpr')
 # train model
 print("Fitting...")
-model.fit(dfs_train['spr_mtrx'], epochs=30, num_threads=2)
-
+model_w.fit(dfs_train['spr_mtrx'], epochs=50)
+model_l.fit(dfs_train['spr_mtrx'], epochs=50)
+model_b.fit(dfs_train['spr_mtrx'], epochs=50)
 
 # zero indexing cause why not? :)
-sample_recommendation(model, dfs_train, range(0, 100, 1))
+sample_recommendation(model_w, dfs_train, [])
+sample_recommendation(model_l, dfs_train, [])
+sample_recommendation(model_b, dfs_train, [])
+
+# testing accuracy
+models = [model_w, model_l, model_b]
+
+
+for model in models:
+    train_precision = precision_at_k(model, dfs_train['spr_mtrx'], k=10).mean()
+    test_precision = precision_at_k(model, dfs_test['spr_mtrx'], k=10).mean()
+
+    train_auc = auc_score(model, dfs_train['spr_mtrx']).mean()
+    test_auc = auc_score(model, dfs_test['spr_mtrx']).mean()
+
+    if model == model_w:
+        print("WARP:")
+    if model == model_l:
+        print("Logistic:")
+    if model == model_b:
+        print("BPR:")
+
+    print('Precision - Train: %.2f, Test: %.2f.' % (train_precision,
+                                                    test_precision))
+    print('AUC - Train: %.2f, Test: %.2f.' % (train_auc,
+                                              test_auc))

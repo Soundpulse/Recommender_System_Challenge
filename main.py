@@ -53,7 +53,7 @@ def sample_recommendation(model, data, user_ids):
                 print("        Score: %s, Book: %s ISBN: %s" %
                       (s, info.iloc[0, 1], info.iloc[0, 0]))
 
-        # books our model predicts he'll like
+        # books our model predicts the user will like
         scores = model.predict(user_id, np.arange(n_books))
 
         # rank them in order (only take the top 5 <O(N) Time>)
@@ -92,22 +92,20 @@ print("Training Model...")
 model_w = LightFM(loss='warp')
 model_l = LightFM(loss='logistic')
 model_b = LightFM(loss='bpr')
-# train model
-print("Fitting...")
-model_w.fit(dfs_train['spr_mtrx'], epochs=50)
-model_l.fit(dfs_train['spr_mtrx'], epochs=50)
-model_b.fit(dfs_train['spr_mtrx'], epochs=50)
-
-# zero indexing cause why not? :)
-sample_recommendation(model_w, dfs_train, [])
-sample_recommendation(model_l, dfs_train, [])
-sample_recommendation(model_b, dfs_train, [])
-
-# testing accuracy
 models = [model_w, model_l, model_b]
 
-
 for model in models:
+    # train model
+    print("Fitting...")
+    model.fit(dfs_train['spr_mtrx'], epochs=50)
+
+    # zero indexing :)
+    # /***********************************************\
+    # | PLACE USER_ID HERE FOR PRINTING AND TESTING!! |
+    # \***********************************************/
+    sample_recommendation(model, dfs_train, [])
+
+    # testing accuracy
     train_precision = precision_at_k(model, dfs_train['spr_mtrx'], k=10).mean()
     test_precision = precision_at_k(model, dfs_test['spr_mtrx'], k=10).mean()
 
@@ -121,7 +119,7 @@ for model in models:
     if model == model_b:
         print("BPR:")
 
+    # printout statements
     print('Precision - Train: %.2f, Test: %.2f.' % (train_precision,
                                                     test_precision))
-    print('AUC - Train: %.2f, Test: %.2f.' % (train_auc,
-                                              test_auc))
+    print('AUC - Train: %.2f, Test: %.2f.' % (train_auc, test_auc))

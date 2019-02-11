@@ -42,26 +42,27 @@ def fetch_ratings(file, min_rating=0):
 
     for line in reader:
         counter = counter + 1
-        if(counter % 10000) == 0:
+        if(counter % 50000) == 0:
             print("Fetched: %d" % counter)
         temp = [x for x in line[0].replace('"', '').split(';')]
-        user = int(temp[0])
-        isbn = temp[1]
-        rating = int(temp[2])
+        try:
+            user = int(temp[0])
+            isbn = temp[1]
+            rating = int(temp[2])
 
-        # Assign user in users
-        if user not in users:
-            users.append(user)
+            # Assign user in users
+            if user not in users:
+                users.append(user)
 
-        # TODO:
-        # IMPLEMENT NAME AND INFORMATION OF BOOK GIVEN ISBN
-        if isbn not in books:
-            books.append(isbn)
+            if isbn not in books:
+                books.append(isbn)
 
-        if rating >= min_rating:
-            data.append(rating)
-            i.append(users.index(user))
-            j.append(books.index(isbn))
+            if rating >= min_rating:
+                data.append(rating)
+                i.append(users.index(user))
+                j.append(books.index(isbn))
+        except IndexError:
+            pass
 
     coo = sp.coo_matrix((data, (i, j)))
 

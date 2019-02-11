@@ -35,6 +35,7 @@ def sample_recommendation(model, data, user_ids):
         print("For User %d: " % users[user_id])
 
         # not enough user input (User has not liked enough books)
+        # prevent giving users books that he don't like
         if known_score[-1] <= 3:
             print("Insufficient Data. Generating Random Premutations...")
 
@@ -81,7 +82,7 @@ def sample_recommendation(model, data, user_ids):
 # testing set available but I have no idea how to test this :/
 print("Fetching Data...")
 dfs_train = d.fetch_ratings("BX-Book-Ratings.csv", 0)
-# dfs_train = d.fetch_ratings("BX-Ratings-Train.csv", 0)
+# dfs_train = d.fetch_ratings("BX-Ratings-Train.csv", 5)
 # dfs_test = d.fetch_ratings("BX-Ratings-Test.csv", 0)
 
 # create model (weighted approximate rank pairwase)

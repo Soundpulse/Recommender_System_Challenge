@@ -5,21 +5,11 @@ import data as d
 # TODO List
 # Better sort for csr
 
-# training and testing data
-# testing set available but I have no idea how to test this :/
-dfs_train = d.fetch_ratings("BX-Ratings-Train.csv", 0)
-dfs_test = d.fetch_ratings("BX-Ratings-Test.csv", 0)
-
-# create model (weighted approximate rank pairwase)
-model = LightFM(loss='warp')
-
-# train model
-model.fit(dfs_train['spr_mtrx'], epochs=30, num_threads=2)
-
 
 def sample_recommendation(model, data, user_ids):
 
     # Initialize variables
+    print("Initializing...")
     n_users, n_books = data['spr_mtrx'].shape
 
     coo = data['spr_mtrx']
@@ -29,6 +19,9 @@ def sample_recommendation(model, data, user_ids):
 
     # load book data
     books = d.fetch_books()
+
+    print("Complete.")
+    print(".=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+.")
 
     for user_id in user_ids:
 
@@ -83,5 +76,22 @@ def sample_recommendation(model, data, user_ids):
         print(".=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+.")
 
 
+# main program
+# training and testing data
+# testing set available but I have no idea how to test this :/
+print("Fetching Data...")
+dfs_train = d.fetch_ratings("BX-Book-Ratings.csv", 0)
+# dfs_train = d.fetch_ratings("BX-Ratings-Train.csv", 0)
+# dfs_test = d.fetch_ratings("BX-Ratings-Test.csv", 0)
+
+# create model (weighted approximate rank pairwase)
+print("Training Model...")
+model = LightFM(loss='warp')
+
+# train model
+print("Fitting...")
+model.fit(dfs_train['spr_mtrx'], epochs=30, num_threads=2)
+
+
 # zero indexing cause why not? :)
-sample_recommendation(model, dfs_train, range(0, 20, 1))
+sample_recommendation(model, dfs_train, range(0, 100, 1))

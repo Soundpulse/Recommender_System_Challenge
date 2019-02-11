@@ -36,10 +36,14 @@ def fetch_book_info(df, isbn):
 def fetch_ratings(file, min_rating=0):
 
     path = os.path.join(dir, "csvfiles", file)
-    f = open(path)
+    f = open(path, errors='ignore', encoding='ISO-8859-1')
     reader = csv.reader(f)
+    counter = 0
 
     for line in reader:
+        counter = counter + 1
+        if(counter % 10000) == 0:
+            print("Fetched: %d" % counter)
         temp = [x for x in line[0].replace('"', '').split(';')]
         user = int(temp[0])
         isbn = temp[1]

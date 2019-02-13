@@ -2,7 +2,10 @@ import numpy as np
 from lightfm import LightFM
 from lightfm.evaluation import precision_at_k
 from lightfm.evaluation import auc_score
-import data as d
+from data import fetch_ratings
+from data import fetch_books
+from data import fetch_book_info
+from split import build_dataset
 
 
 def sample_recommendation(model, data, user_ids):
@@ -16,7 +19,7 @@ def sample_recommendation(model, data, user_ids):
     csr = coo.tocsr()
 
     # load book data
-    books = d.fetch_books()
+    books = fetch_books()
 
     print("Complete.")
     print(".=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+.")
@@ -40,7 +43,7 @@ def sample_recommendation(model, data, user_ids):
         # All info is fetched for easier access later
         # print known positives
         for i in range(1, 6):
-            info = d.fetch_book_info(books, bid[known_positives[-i]])
+            info = fetch_book_info(books, bid[known_positives[-i]])
             s = known_score[-i]
             if info.empty:
                 print("        Score: %s, Book: not in database :( ISBN: %s " %
@@ -62,8 +65,8 @@ def sample_recommendation(model, data, user_ids):
         # print Recommendations
         print("     Recommended:")
         for i in range(1, 6):
-            info = d.fetch_book_info(books,
-                                     bid[predict_recommendations[6 - i]])
+            info = fetch_book_info(books,
+                                   bid[predict_recommendations[6 - i]])
             s = round(predict_score[6 - i], 2)
             if info.empty:
                 print('        Score: %s, Book: not in database :('
@@ -76,29 +79,33 @@ def sample_recommendation(model, data, user_ids):
         print(".=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+.")
 
 
-def train(models, user_ids):
+def train(models, train, test):
     highest_test_precision = 0
     best_model = None
 
     for model in models:
         # train model
         print("Fitting...")
-        model.fit(dfs_train['spr_mtrx'], epochs=50)
+        model.fit(train['spr_mtrx'], epochs=30)
 
         # zero indexing :)
         # /***********************************************\
         # | PLACE USER_ID HERE FOR PRINTING AND TESTING!! |
         # \***********************************************/
-        sample_recommendation(model, dfs_train, [])
+        # sample_recommendation(model, train, [])
 
         # testing accuracy
         train_precision = precision_at_k(model,
-                                         dfs_train['spr_mtrx'], k=10).mean()
+                                         train['spr_mtrx'],
+                                         k=10).mean()
         test_precision = precision_at_k(model,
-                                        dfs_test['spr_mtrx'], k=10).mean()
+                                        test['spr_mtrx'],
+                                        k=10).mean()
 
-        train_auc = auc_score(model, dfs_train['spr_mtrx']).mean()
-        test_auc = auc_score(model, dfs_test['spr_mtrx']).mean()
+        train_auc = auc_score(model,
+                              train['spr_mtrx']).mean()
+        test_auc = auc_score(model,
+                             test['spr_mtrx']).mean()
 
         if model == model_w:
             print("WARP:")
@@ -112,39 +119,42 @@ def train(models, user_ids):
                                                         test_precision))
         print('AUC - Train: %.2f, Test: %.2f.' % (train_auc, test_auc))
 
-        print(test_precision)
-        print(highest_test_precision)
-        print("value")
         if test_precision > highest_test_precision:
             highest_test_precision = test_precision
             best_model = model
 
     if best_model == model_w:
-        print("Best Model: WARP, test precision: %.2f" %
+        print("Best Model: WARP, test precision: %.8f" %
               highest_test_precision)
     if best_model == model_l:
-        print("Best Model: Logistic, test precision: %.2f" %
+        print("Best Model: Logistic, test precision: %.8f" %
               highest_test_precision)
     if best_model == model_b:
-        print("Best Model: BPR, test precision: %.2f" %
+        print("Best Model: BPR, test precision: %.8f" %
               highest_test_precision)
 
-    sample_recommendation(best_model, dfs_train, user_ids)
-    return best_model
+    sample_recommendation(best_model, train, range(1, 10, 1))
 
 
 # main program
 # training and testing data
 print("Fetching Data...")
-# dfs = d.fetch_ratings("BX-Book-Ratings.csv", 5)
-dfs_train = d.fetch_ratings("BX-Ratings-Train.csv", 5)
-dfs_test = d.fetch_ratings("BX-Ratings-Test.csv", 5)
 
-# create model (weighted approximate rank pairwase)
+print("Building dataset...")
+dataset = build_dataset("BX-Book-Ratings.csv", min_rating=1)
+dfs_train = fetch_ratings(dataset['train'])
+dfs_test = fetch_ratings(dataset['test'])
+
+print("Printing representations:")
+
+print(repr(dfs_train))
+print(repr(dfs_test))
+
+# create model
 print("Training Model...")
 model_w = LightFM(loss='warp')
 model_l = LightFM(loss='logistic')
 model_b = LightFM(loss='bpr')
 models = [model_w, model_l, model_b]
 
-train(models, range(1, 10, 1))
+train(models, dfs_train, dfs_test)

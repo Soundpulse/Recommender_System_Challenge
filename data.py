@@ -1,15 +1,10 @@
 import os
 import scipy.sparse as sp
-import csv
+import numpy as np
 import pandas as pd
 # Fetching and formatting datasets
 
 dir = os.path.dirname(__file__)
-
-# Data to create our coo_matrix
-data, i, j = [], [], []
-
-users, books = [], []
 
 
 def fetch_books():
@@ -33,43 +28,31 @@ def fetch_book_info(df, isbn):
 
 
 # Row: users, Column: books, value: ratings
-def fetch_ratings(file, min_rating=0):
+def fetch_ratings(df):
 
-    path = os.path.join(dir, "csvfiles", file)
-    f = open(path, errors='ignore', encoding='ISO-8859-1')
-    reader = csv.reader(f)
-    counter = 0
+    row, col = [], []
 
-    for line in reader:
-        counter = counter + 1
-        if(counter % 50000) == 0:
-            print("Fetched: %d" % counter)
-        temp = [x for x in line[0].replace('"', '').split(';')]
-        try:
-            user = int(temp[0])
-            isbn = temp[1]
-            rating = int(temp[2])
+    df = df.reset_index(drop=True)
 
-            # Assign user in users
-            if user not in users:
-                users.append(user)
+    # In order
+    users = df.iloc[:, 0].astype('int32').to_numpy()
+    books = df.iloc[:, 1].to_numpy()
+    ratings = df.iloc[:, 2].astype('int32').to_numpy()
 
-            if isbn not in books:
-                books.append(isbn)
+    # Initialize matrix row, col and value
+    # In sequential order, but a[i] might be correspond to b[i]
+    set_users = np.unique(users)
+    set_books = np.unique(books)
 
-            if rating >= min_rating:
-                data.append(rating)
-                i.append(users.index(user))
-                j.append(books.index(isbn))
-        except IndexError:
-            pass
+    for user in users:
+        row.append(set_users.searchsorted(user))
+    for book in books:
+        col.append(set_books.searchsorted(book))
 
-    coo = sp.coo_matrix((data, (i, j)))
+    coo = sp.coo_matrix((ratings, (row, col)))
 
-    dictionary = {
-        'spr_mtrx': coo,
-        'book_id': books,
-        'users': users
-    }
+    print(repr(coo))
+
+    dictionary = {'spr_mtrx': coo, 'book_id': books, 'users': users}
 
     return dictionary

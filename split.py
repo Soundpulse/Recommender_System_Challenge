@@ -38,7 +38,7 @@ def build_dataset(file, min_rating=0):
     df_test = df[~msk]
 
     # Brute Force :(
-    for x in range(0, 5, 1):
+    for x in range(0, 10, 1):
         common_isbn = list(set(df_test['ISBN']).intersection(df_train['ISBN']))
 
         df_train = df_train.loc[df_train['ISBN'].isin(common_isbn)]

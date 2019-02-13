@@ -115,9 +115,9 @@ def train(models, train, test):
             print("BPR:")
 
         # printout statements
-        print('Precision - Train: %.2f, Test: %.2f.' % (train_precision,
+        print('Precision - Train: %.3f, Test: %.3f.' % (train_precision,
                                                         test_precision))
-        print('AUC - Train: %.2f, Test: %.2f.' % (train_auc, test_auc))
+        print('AUC - Train: %.3f, Test: %.3f.' % (train_auc, test_auc))
 
         if test_precision > highest_test_precision:
             highest_test_precision = test_precision

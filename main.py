@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 from lightfm import LightFM
 from lightfm.evaluation import precision_at_k
@@ -6,6 +7,7 @@ from data import fetch_ratings
 from data import fetch_books
 from data import fetch_book_info
 from split import build_dataset
+import scipy as sp
 
 
 def sample_recommendation(model, data, user_ids):
@@ -144,6 +146,14 @@ print("Building dataset...")
 dataset = build_dataset("BX-Book-Ratings.csv", min_rating=1)
 dfs_train = fetch_ratings(dataset['train'])
 dfs_test = fetch_ratings(dataset['test'])
+
+# Generating Heat Map
+print("Generating Heat Map...")
+
+dm = dfs_train['spr_mtrx'].todense()
+
+plt.imshow(dm[1:10000, 1:10000], cmap='hot')
+plt.show()
 
 print("Printing representations:")
 
